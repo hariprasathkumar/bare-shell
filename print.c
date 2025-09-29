@@ -73,7 +73,6 @@ int my_vsnprintf(char *str, size_t size, const char *format, va_list ap)
                     {
                         int c = va_arg(ap, int);
                         if (size != 0 && i < size - 1) str[i] = (unsigned char)c; // defautl promotion
-                        printf("%d\n", str[i]);
                         i++, total_length++;
                         break;
                     }

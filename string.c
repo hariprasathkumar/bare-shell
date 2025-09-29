@@ -1,5 +1,6 @@
 
 #include "string.h"
+#include "machine.h"
 
 
 // if 0 -> 0-1 => 0xff & 0x80 => 0x80 & 0x80 => != 0
@@ -33,4 +34,22 @@ int my_strncmp(const char *s1, const char *s2, size_t n)
     if (!n) return 0;
     for ( n-- ; *str1 == *str2 && *str1 && n; str1++, str2++, n-- );
     return *str1-*str2;
+}
+
+char *my_strncpy(char *restrict dest, const char *restrict src, size_t n)
+{
+    char *dest_s = dest;
+    const char *src_s = src;
+    
+    if (!n) return dest;
+
+    while (*src_s && n) {
+        *dest_s++ = *src_s++, n--;
+    }
+
+    while (n) {
+        *dest_s = '\0', dest_s++, n--;
+    }
+
+    return dest;
 }
