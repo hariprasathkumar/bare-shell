@@ -1,6 +1,7 @@
 
 #include "string.h"
 #include "machine.h"
+#include "heap.h"
 
 
 // if 0 -> 0-1 => 0xff & 0x80 => 0x80 & 0x80 => != 0
@@ -52,4 +53,14 @@ char *my_strncpy(char *restrict dest, const char *restrict src, size_t n)
     }
 
     return dest;
+}
+
+char *my_strdup(const char *s)
+{
+    size_t len = my_strlen(s);
+    char *new_str = (char *)my_malloc(len+1);
+
+    my_strncpy(new_str, s, len+1);
+
+    return new_str;
 }

@@ -2,13 +2,14 @@
 #include "memory.h"
 #include "print.h"
 #include "string.h"
+#include "heap.h"
 
 #define MAX_HISTORY 1024
 #define CMD_BUF_SIZE 512
 
 struct hist_entry {
     size_t num;
-    char arr[CMD_BUF_SIZE];
+    char *arr;
 };
 
 static struct hist_entry history[MAX_HISTORY];
@@ -21,13 +22,21 @@ void init_history(void)
 {
     for (size_t i = 0; i < MAX_HISTORY; i++) 
     {
-        my_memset(history[i].arr, 0, CMD_BUF_SIZE);
+        history[i].arr = NULL;
         history[i].num = 0;
     }
     next_num = 1;
     head = 0;
     count = 0;
     cursor = 0;
+}
+
+void free_history(void)
+{
+    for (size_t i = 0; i < MAX_HISTORY; i++) 
+    {
+        if (history[i].arr) my_free(history[i].arr);
+    }
 }
 
 const char *get_history(size_t cmd)    
@@ -50,11 +59,11 @@ void update_history(const char *cmd)
 
     size_t last_cmd = (head + MAX_HISTORY - 1) % MAX_HISTORY;
 
-    if (my_strncmp(cmd, history[last_cmd].arr, CMD_BUF_SIZE) == 0)
+    if (history[last_cmd].arr && my_strncmp(cmd, history[last_cmd].arr, CMD_BUF_SIZE) == 0)
     {
         return; // dont add
     }
-    my_strncpy(history[head].arr, cmd, CMD_BUF_SIZE);
+    history[head].arr = my_strdup(cmd);
     history[head].num = next_num;
 
     next_num++;

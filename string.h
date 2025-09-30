@@ -9,4 +9,6 @@ int my_strcmp(const char *s1, const char *s2);
 int my_strncmp(const char *s1, const char *s2, size_t n);
 char *my_strncpy(char *restrict dest, const char *restrict src, size_t n);
 
+char *my_strdup(const char *s);
+
 #endif 

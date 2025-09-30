@@ -52,3 +52,18 @@ long sys_ioctl(unsigned int fd, unsigned int cmd, unsigned long arg)
 
     return retVal1;
 }
+
+//12	common	brk			sys_brk
+long sys_brk(unsigned long brk)
+{
+    long retVal1 = 0;
+
+    asm volatile(
+        "syscall\n\t"
+        : "=a"(retVal1)
+        : "a"(12), "D"((long)brk) /* inputs */
+        : "rcx", "r11", "memory"
+    );
+
+    return retVal1;
+}

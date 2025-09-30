@@ -5,6 +5,7 @@
 #include "machine.h"
 
 void init_history(void);
+void free_history(void);
 void print_history(void);
 const char *get_history(size_t cmd)  ;
 void  update_history(const char *cmd);
