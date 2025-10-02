@@ -67,3 +67,63 @@ long sys_brk(unsigned long brk)
 
     return retVal1;
 }
+
+//257	common	openat			sys_openat
+long sys_openat(int dfd, const char *filename, int flags, umode_t mode)
+{
+    long retVal1 = 0;
+
+    asm volatile(
+        "syscall\n\t"
+        : "=a"(retVal1)
+        : "a"(257), "D"((long)dfd), "S"((long)filename), "d"((long )flags), "r"((long)mode) /* inputs */
+        : "rcx", "r11", "memory"
+    );
+
+    return retVal1;
+}
+
+//217	common	getdents64		sys_getdents64
+long sys_getdents64(unsigned int fd, struct linux_dirent64 *dirent, unsigned int count)
+{
+    long retVal1 = 0;
+
+    asm volatile(
+        "syscall\n\t"
+        : "=a"(retVal1)
+        : "a"(217), "D"((long)fd), "S"((long)dirent), "d"((long )count) /* inputs */
+        : "rcx", "r11", "memory"
+    );
+
+    return retVal1;
+}
+
+//3	common	close			sys_close
+long sys_close(unsigned int fd)
+{
+    long retVal1 = 0;
+
+    asm volatile(
+        "syscall\n\t"
+        : "=a"(retVal1)
+        : "a"(3), "D"((long)fd) /* inputs */
+        : "rcx", "r11", "memory"
+    );
+
+    return retVal1;
+}
+
+//21	common	access			sys_access
+long sys_access(const char *filename, int mode)
+{
+    long retVal1 = 0;
+
+    asm volatile(
+        "syscall\n\t"
+        : "=a"(retVal1)
+        : "a"(21), "D"((long)filename), "S"((long)mode) /* inputs */
+        : "rcx", "r11", "memory"
+    );
+
+    return retVal1;
+}

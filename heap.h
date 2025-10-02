@@ -10,6 +10,8 @@
 long heap_init() ;
 void *my_malloc(size_t size);
 void my_free(void *ptr);
+size_t get_heap_size();
+
 
 void walk(void);;
 

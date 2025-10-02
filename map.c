@@ -182,7 +182,7 @@ struct sym_entry *map_lookup(struct hash **hash, const char *cmd)
 
 void free_wrapper(void * p, const char *owner)
 {
-    //my_printf("free by %s ptr %d", owner, p);
+    //my_printf("free by %s ptr %d\n", owner, p);
     my_free(p);
 }
 

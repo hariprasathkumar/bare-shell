@@ -14,6 +14,11 @@ struct block {
 static struct block *heap_start;
 static void *heap_end;
 
+size_t get_heap_size()
+{
+    return (char *) heap_end - (char *) heap_start;
+}
+
 static size_t align(size_t size)
 {
     return (size + MACHINE_ALIGNMENT - 1) & ~(MACHINE_ALIGNMENT - 1);
