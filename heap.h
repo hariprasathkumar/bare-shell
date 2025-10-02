@@ -13,6 +13,6 @@ void my_free(void *ptr);
 size_t get_heap_size();
 
 
-void walk(void);;
+void walk(void);
 
 #endif
