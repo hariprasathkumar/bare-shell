@@ -1,0 +1,38 @@
+
+// EBNF 
+// =   : defines a rule
+// ;   : end of a rule definition
+// |   : alternation "or"
+// []  : 0 or 1 occurence
+// {}  : 0 or more occurence
+// ()  : grouping, certain sequence
+// ""  : literals
+// ... : repeat many times
+
+// since my goal is kernel facing, i am avoiding
+// subshell / quotes - this makes it not posix compiliant, but still yeah.. good enough for me..
+// bad experience with overlapping tokens.. let me flex my muscles later 
+
+line          = list ;
+list          = pipeline { list_sep pipeline } ;
+list_sep      = ";" | "&" | "&&" | "||" ;
+pipeline      = command { "|" command } ;
+command       = simple_command ;
+simple_command = word { word } { redirection } ;
+redirection   = ( ">" filename 
+                | ">>" filename 
+                | "<" filename ) ;
+word          = bareword ;
+bareword      = { non_special_char } ;
+filename      = word ;
+
+// List of tokens
+// ;
+// &
+// &&
+// ||
+// >
+// <
+// >>
+// group of chars that is any of above token or <space> <newline> => [a-zA-Z0-9._/-]+
+// EOL -> \n
