@@ -174,6 +174,6 @@ void print_tokens(void)
 
     for (size_t i = 0; i < cap; i++)
     {
-        my_printf("token type %d, %s", (int)tokens.arr[i].type, tokens.arr[i].lexeme);
+        my_printf("token type %d, %s\n", (int)tokens.arr[i].type, tokens.arr[i].lexeme);
     }
 } 

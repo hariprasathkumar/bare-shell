@@ -13,18 +13,14 @@
 // subshell / quotes - this makes it not posix compiliant, but still yeah.. good enough for me..
 // bad experience with overlapping tokens.. let me flex my muscles later 
 
-line          = list ;
-list          = pipeline { list_sep pipeline } ;
-list_sep      = ";" | "&" | "&&" | "||" ;
+// simplified
+
+list          = pipeline { (";" | "&" | "&&" | "||") pipeline } ;
 pipeline      = command { "|" command } ;
-command       = simple_command ;
-simple_command = word { word } { redirection } ;
-redirection   = ( ">" filename 
-                | ">>" filename 
-                | "<" filename ) ;
-word          = bareword ;
-bareword      = { non_special_char } ;
-filename      = word ;
+command       = word { word } { redirection } ;
+redirection   = ( ">" word 
+                | ">>" word 
+                | "<" word ) ;
 
 // List of tokens
 // ;
@@ -36,3 +32,52 @@ filename      = word ;
 // >>
 // group of chars that is any of above token or <space> <newline> => [a-zA-Z0-9._/-]+
 // EOL -> \n
+
+// so there are four types
+// struct redirection {
+//    enum redir_type type;
+//    char *filename;
+//    struct redirection *next;
+// };
+
+// struct command {
+//    int argc;
+//    char **argv;
+//    struct redirection *redir;
+// }
+
+// pipeline is a wrapper of command , there can be more than one command but there are rooted by |  (| is implicit)
+// so 
+// struct pipeline {
+//    struct ast *left;
+//    struct ast *right;
+// };
+
+// list is a wrapper of pipeline, there can be more than one pipeline but there are rooted by ;, &, &&, ||
+// so
+// struct list {
+//    struct ast *left;
+//    struct ast *right;
+//    char op;
+// }
+
+// finally
+// enum ast_type {
+//    AST_REDIRECTION,
+//    AST_COMMAND,
+//    AST_PIPELINE,
+//    AST_LIST,
+// }; 
+// enum redir_type {
+//      REDIR_OUT,
+//      REDIR_IN,
+//      REDIR_APPEND,
+// };
+// struct ast {
+//     enum ast_type type;
+//     union {
+//         struct command cmd;
+//         struct pipeline pipe;
+//         struct list list;
+//     } u;
+// };
