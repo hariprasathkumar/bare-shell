@@ -24,8 +24,8 @@ struct command {
 };
 
 struct pipeline {
-   struct ast *left;
-   struct ast *right;
+   int count;
+   struct ast **cmds;
 };
 
 struct list {

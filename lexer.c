@@ -134,6 +134,11 @@ const struct token_stream *tokenize(const char *line, size_t *ntokens)
         }
     }
 
+    if (i != 0)
+    {
+        update_word(buf, &i);
+    }
+
     my_free(buf);
 
     if (i == 256) {

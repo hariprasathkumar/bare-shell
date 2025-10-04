@@ -28,6 +28,8 @@ static void parse_error(const char *msg, struct token *t)
 static struct ast *create_ast_node(void)
 {
     void *ret = my_malloc(sizeof(struct ast));
+    if (!ret) return NULL;
+
     my_memset(ret, 0, sizeof(struct ast));
 
     return (struct ast *)ret;
@@ -36,15 +38,41 @@ static struct ast *create_ast_node(void)
 static struct redirection *create_redirect_node(void)
 {
     void *ret = my_malloc(sizeof(struct redirection));
+    if (!ret) return NULL;
+
     my_memset(ret, 0, sizeof(struct redirection));
 
     return (struct redirection *) ret;
+}
+
+static struct ast **alloc_cmd_array(size_t size)
+{
+    struct ast **ret = (struct ast **)my_malloc(sizeof(struct ast *) * size);
+    if (!ret) return NULL;
+
+    my_memset(ret, 0, sizeof(struct ast *) * size);
+
+    return (struct ast **)ret;
+}
+
+static struct ast **resize_cmd_array(struct ast **cur, size_t old_size, size_t size)
+{
+    struct ast **new = alloc_cmd_array(size);
+    if (!new) return NULL;
+
+    my_memset(new, 0, sizeof(struct ast *) *size);
+    my_memcpy(new, cur, sizeof(struct ast *) *old_size);
+
+    my_free(cur);
+
+    return new;
 }
 
 static char **alloc_string_array(size_t size)
 {
     size++; // null terminator
     char **ret = (char **)my_malloc(sizeof(char *) * size);
+    if (!ret) return NULL;
 
     my_memset(ret, 0, sizeof(char *) * size);
 
@@ -57,6 +85,8 @@ static char **resize_string_array(char **cur, size_t size)
     char **ret = alloc_string_array(size);
     char **i = ret;
     char **orginal = cur;
+
+    if (!ret) return NULL;
 
     while (*cur) {
         *i = *cur;
@@ -75,10 +105,13 @@ static char **get_words(const struct token_stream *ts, size_t *pos, int *argc)
     char **ret = alloc_string_array(arr_size);
     enum token_type type = peek_token(ts, *pos);
 
+    if (!ret) return NULL;
+
     while (type == TOK_WORD) {
         if (i == arr_size) {
             arr_size *= 2;
             ret = resize_string_array(ret, arr_size);
+            if (!ret) return NULL;
         }
 
         struct token *c = next_token(ts, pos);
@@ -110,6 +143,8 @@ struct ast *parse_list(const struct token_stream *ts, size_t *pos)
     while (type == TOK_SEMICOLON || type == TOK_AMP || type == TOK_AND_IF || type == TOK_OR_IF)
     {
         struct ast *new = create_ast_node();
+        if (!new) return node;
+
         new->type = AST_LIST;
         new->u.list.left = node;
 
@@ -142,22 +177,35 @@ struct ast *parse_list(const struct token_stream *ts, size_t *pos)
 // pipeline      = command { "|" command } 
 struct ast *parse_pipeline(const struct token_stream *ts, size_t *pos)
 {
+    int size = 10;
+    int count = 0;
     struct ast *node = create_ast_node();
+    struct ast **cmd = alloc_cmd_array(size);
+    if (!node) return NULL;
 
-    node->u.pipe.left = parse_command(ts, pos);
     node->type = AST_PIPELINE;
+    cmd[count++] = parse_command(ts, pos);
 
     enum token_type type = peek_token(ts, *pos);
 
-    if (type == TOK_PIPE) {
+    while (type == TOK_PIPE)
+    {
+        if (count == size)
+        {
+            cmd = resize_cmd_array(cmd, size, size*2);
+            if (!cmd) return NULL;
+
+            size *= 2;
+        }
+
         (void)next_token(ts, pos);
 
-        node->u.pipe.right = parse_command(ts, pos);
-    } 
-    else 
-    {
-        node->u.pipe.right = NULL;
+        cmd[count++] = parse_command(ts, pos);
+        type = peek_token(ts, *pos);
     }
+
+    node->u.pipe.cmds = cmd;
+    node->u.pipe.count = count;
 
     return node;
 }
@@ -167,6 +215,8 @@ struct ast *parse_command(const struct token_stream *ts, size_t *pos)
 {
     struct ast *node = create_ast_node();
     int argc;
+
+    if (!node) return NULL;
 
     node->type = AST_COMMAND;
     node->u.cmd.argv = get_words(ts, pos, &argc);
@@ -204,6 +254,8 @@ struct redirection *parse_redirection(const struct token_stream *ts, size_t *pos
             struct token *t = next_token(ts, pos);
 
             list = create_redirect_node();
+            if (!list) return NULL;
+
             list->type = REDIR_OUT;
             list->filename = t->lexeme;
             list->next = parse_redirection(ts, pos);
@@ -217,6 +269,8 @@ struct redirection *parse_redirection(const struct token_stream *ts, size_t *pos
             struct token *t = next_token(ts, pos);
 
             list = create_redirect_node();
+            if (!list) return NULL;
+
             list->type = REDIR_APPEND;
             list->filename = t->lexeme;
             list->next = parse_redirection(ts, pos);
@@ -230,6 +284,8 @@ struct redirection *parse_redirection(const struct token_stream *ts, size_t *pos
             struct token *t = next_token(ts, pos);
 
             list = create_redirect_node();
+            if (!list) return NULL;
+
             list->type = REDIR_IN;
             list->filename = t->lexeme;
             list->next = parse_redirection(ts, pos);
@@ -260,10 +316,13 @@ void free_ast(struct ast *node)
             break;
         }
 
-        case AST_PIPELINE:
+        case AST_PIPELINE: 
         {
-            free_ast(node->u.pipe.left);
-            free_ast(node->u.pipe.right);
+            size_t c = node->u.pipe.count;
+            for (size_t i = 0; i < c; i++) {
+                free_ast(node->u.pipe.cmds[i]);
+            }
+            my_free(node->u.pipe.cmds);
             break;
         }
 
@@ -335,10 +394,11 @@ void print_ast(struct ast *root, int depth)
         {
             print_pretty(depth);
             my_printf("AST_PIPELINE:\n");
-            if (root->u.pipe.left)
-            print_ast(root->u.pipe.left, depth+1);
-            if (root->u.pipe.right)
-            print_ast(root->u.pipe.right, depth+1);
+            size_t i = 0, c = root->u.pipe.count;
+            for ( ; i < c; i++)
+            {
+                print_ast(root->u.pipe.cmds[i], depth+1);
+            }
             break;
         }
 

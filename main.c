@@ -5,6 +5,8 @@
 #include "symtab.h"
 #include "lexer.h"
 #include "parser.h"
+#include "execute.h"
+#include "syscall.h"
 
 int main(int argc, char *argv[], char *envp[])
 {
@@ -38,6 +40,15 @@ int main(int argc, char *argv[], char *envp[])
             break;
         }
 
+        ldisc_deinit();
+        pid_t pid = execute_ast(tree, (const char * const*)envp, &symbol_table, 0, 1);
+        int status;
+
+        if (pid > 0) {
+            sys_wait4(pid, &status, 0, NULL);
+        }
+
+        ldisc_init();
         free_ast(tree);
         free_tokens();
     }

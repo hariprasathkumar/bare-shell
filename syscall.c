@@ -127,3 +127,109 @@ long sys_access(const char *filename, int mode)
 
     return retVal1;
 }
+
+//57	common	fork			sys_fork
+long sys_fork(void)
+{
+    long retVal1 = 0;
+
+    asm volatile(
+        "syscall\n\t"
+        : "=a"(retVal1)
+        : "a"(57) /* inputs */
+        : "rcx", "r11", "memory"
+    );
+
+    return retVal1;
+}
+
+//59	64	execve			sys_execve
+long sys_execve(const char *filename, const char *const *argv, const char *const *envp)
+{
+    long retVal1 = 0;
+
+    asm volatile(
+        "syscall\n\t"
+        : "=a"(retVal1)
+        : "a"(59), "D"((long)filename), "S"((long)argv), "d"((long)envp) /* inputs */
+        : "rcx", "r11", "memory"
+    );
+
+    return retVal1;
+}
+
+//33	common	dup2			sys_dup2
+long sys_dup2(unsigned int oldfd, unsigned int newfd)
+{
+    long retVal1 = 0;
+
+    asm volatile(
+        "syscall\n\t"
+        : "=a"(retVal1)
+        : "a"(33), "D"((long)oldfd), "S"((long)newfd) /* inputs */
+        : "rcx", "r11", "memory"
+    );
+
+    return retVal1;
+}
+
+//61	common	wait4			sys_wait4
+long sys_wait4(pid_t pid, int *stat_addr, int options, void *ru)
+{
+    long retVal1;
+
+    asm volatile(
+        "syscall\n\t"
+        : "=a"(retVal1)
+        : "a"(61), "D"((long)pid), "S"((long)stat_addr), "d"((long)options), "r"((long)ru) /* inputs */
+        : "rcx", "r11", "memory"
+    );
+
+    return retVal1;
+}
+
+//293	common	pipe2			sys_pipe2
+long sys_pipe2(int *fildes, int flags)
+{
+    long retVal1 = 0;
+
+    asm volatile(
+        "syscall\n\t"
+        : "=a"(retVal1)
+        : "a"(293), "D"((long)fildes), "S"((long)flags) /* inputs */
+        : "rcx", "r11", "memory"
+    );
+
+    return retVal1;
+}
+
+//80	common	chdir			sys_chdir
+long sys_chdir(const char *filename)
+{
+    long retVal1 = 0;
+
+    asm volatile(
+        "syscall\n\t"
+        : "=a"(retVal1)
+        : "a"(80), "D"((long)filename) /* inputs */
+        : "rcx", "r11", "memory"
+    );
+
+    return retVal1;
+}
+
+
+//60	common	exit			sys_exit	
+long sys_exit(int error_code)
+{
+    long retVal1 = 0;
+
+    asm volatile(
+        "syscall\n\t"
+        : "=a"(retVal1)
+        : "a"(60), "D"((long)error_code) /* inputs */
+        : "rcx", "r11", "memory"
+    );
+
+    return retVal1;
+}

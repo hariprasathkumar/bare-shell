@@ -11,7 +11,6 @@
 
 // since my goal is kernel facing, i am avoiding
 // subshell / quotes - this makes it not posix compiliant, but still yeah.. good enough for me..
-// bad experience with overlapping tokens.. let me flex my muscles later 
 
 // simplified
 
