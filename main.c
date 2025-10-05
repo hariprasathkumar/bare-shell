@@ -10,6 +10,42 @@
 #include "print.h"
 #include "memory.h"
 
+int last_status = 0;
+
+// https://gist.github.com/JBlond/2fea43a3049b38287e5e9cefc87b2124
+#define COLOR_RESET   "\033[0m"
+#define COLOR_GREEN   "\033[1;32m"
+#define COLOR_YELLOW  "\033[1;33m"
+#define COLOR_RED     "\033[1;31m"
+#define COLOR_CYAN    "\033[1;36m"
+
+void smart_prompt(int laststatus)
+{
+    char path[256];
+
+    struct new_utsname uts;
+
+    long ret = sys_getcwd(path, sizeof(path));
+    if (ret < 0) {
+        path[0] = '!';
+        path[1] = '\0';
+    }
+
+    sys_newuname(&uts);
+
+    int uid = sys_getuid();
+    const char *user = (uid == 0) ? "sudo" : "user";
+    const char *color = (last_status == 0) ? COLOR_GREEN : COLOR_RED;
+    const char *symbol = (last_status == 0) ? "🟢" : "🔴";
+
+    my_printf("%smysh%s [%d] %s%s@%s%s %s%s%s %s ",
+              COLOR_CYAN, COLOR_RESET,
+              last_status,
+              color, user, uts.nodename, COLOR_RESET,
+              COLOR_YELLOW, path, COLOR_RESET,
+              symbol);
+}
+
 void sigchld_handler(int signo)
 {
     int status;
@@ -71,7 +107,7 @@ int main(int argc, char *argv[], char *envp[])
 
     while (1) {
         const char * line;
-        line = my_readline("mysh$ ");
+        line = my_readline(last_status);
         if (!line) break;
         update_history(line);
 
@@ -91,11 +127,13 @@ int main(int argc, char *argv[], char *envp[])
 
         ldisc_deinit();
         pid_t pid = execute_ast(tree, (const char * const*)envp, &symbol_table, 0, 1);
-        int status;
+        int status = -1;
 
         if (pid > 0) {
             sys_wait4(pid, &status, 0, NULL);
         }
+
+        last_status = WIFEXITED(status) ? WEXITSTATUS(status) : 1;
 
         ldisc_init();
         free_ast(tree);

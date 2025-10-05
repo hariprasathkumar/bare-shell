@@ -274,3 +274,48 @@ long sys_rt_sigaction(int signum,
     );
     return ret;
 }
+
+//79	common	getcwd			sys_getcwd
+long sys_getcwd(char *buf, unsigned long size)
+{
+    long retVal1;
+
+    asm volatile(
+        "syscall\n\t"
+        : "=a"(retVal1)
+        : "a"(79), "D"((long)buf), "S"((long)size) /* inputs */
+        : "rcx", "r11", "memory"
+    );
+
+    return retVal1; 
+}
+
+//63	common	uname			sys_newuname
+long sys_newuname(struct new_utsname *name)
+{
+    long retVal1;
+
+    asm volatile(
+        "syscall\n\t"
+        : "=a"(retVal1)
+        : "a"(79), "D"((long)name) /* inputs */
+        : "rcx", "r11", "memory"
+    );
+
+    return retVal1; 
+}
+
+//102	common	getuid			sys_getuid
+long sys_getuid(void)
+{
+    long retVal1;
+
+    asm volatile(
+        "syscall\n\t"
+        : "=a"(retVal1)
+        : "a"(102) /* inputs */
+        : "rcx", "r11", "memory"
+    );
+
+    return retVal1; 
+}

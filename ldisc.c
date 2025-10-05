@@ -82,10 +82,12 @@ void ldisc_deinit(void) {
     if (ret < 0) sys_write(1, err, my_strlen(err));  
 }
 
-void redraw(const char *prompt, size_t *cursor)
+extern void smart_prompt(int laststatus);
+
+void redraw(int last_status, size_t *cursor)
 {
     my_printf("\r");
-    my_printf("%s", prompt);
+    smart_prompt(last_status);
     my_printf("\x1b[0K");  // erase till end of line
     my_printf("%s", ldisc_line);
     size_t len = my_strlen(ldisc_line);
@@ -94,7 +96,7 @@ void redraw(const char *prompt, size_t *cursor)
     }
 }
 
-const char *my_readline(const char *prompt)
+const char *my_readline(int last_status)
 {
     char c;
     size_t len = 0;
@@ -103,13 +105,13 @@ const char *my_readline(const char *prompt)
     long ctrlchar = 0;
 
     my_memset(ldisc_line, 0, LDISC_MAX_LINE);
-    my_printf("%s", prompt);
+    smart_prompt(last_status);
     while ((ret = sys_read(0, &c, 1)) == 1 && len < LDISC_MAX_LINE - 1) {
         if (ctrlchar == 0 && c >= 32 && c <= 126) {
             if (cursor_pos != len) my_memmove(ldisc_line + cursor_pos + 1, ldisc_line + cursor_pos, len - cursor_pos + 1);
             ldisc_line[cursor_pos++] = c;
             len++;
-            redraw(prompt, &cursor_pos);
+            redraw(last_status, &cursor_pos);
         } else if (c == '\n' || c == '\r') {
             ldisc_line[len] = '\0'; 
             break;
@@ -119,7 +121,7 @@ const char *my_readline(const char *prompt)
                 my_memmove(ldisc_line + cursor_pos - 1, ldisc_line + cursor_pos, len - cursor_pos + 1);
                 cursor_pos--;
                 len--;
-                redraw(prompt, &cursor_pos);
+                redraw(last_status, &cursor_pos);
                 // Move cursor back where it belongs
                 for (size_t k = cursor_pos; k < len; k++) {
                     my_printf("\x1b[D");
@@ -155,7 +157,7 @@ const char *my_readline(const char *prompt)
             {
                 my_strncpy(ldisc_line, prev, LDISC_MAX_LINE);
                 cursor_pos = len = my_strlen(ldisc_line);
-                redraw(prompt, &cursor_pos);
+                redraw(last_status, &cursor_pos);
             }
         } else if (ctrlchar == 2 && c == 'B') {
             // down arrow
@@ -165,7 +167,7 @@ const char *my_readline(const char *prompt)
             {
                 my_strncpy(ldisc_line, next, LDISC_MAX_LINE);
                 cursor_pos = len = my_strlen(ldisc_line);
-                redraw(prompt, &cursor_pos);
+                redraw(last_status, &cursor_pos);
             }
         } else {
             ctrlchar = 0;

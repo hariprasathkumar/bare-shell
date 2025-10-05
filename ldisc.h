@@ -7,6 +7,6 @@
 void   ldisc_init(void);
 void ldisc_deinit(void);
 size_t ldisc_get_line(char *line, size_t line_length);
-const char * my_readline(const char *prompt);
+const char *my_readline(int last_status);
 
 #endif

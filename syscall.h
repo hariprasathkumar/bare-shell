@@ -60,6 +60,17 @@ struct sigaction {
     sigset_t sa_mask;
 };
 
+#define __NEW_UTS_LEN 64
+
+struct new_utsname {
+	char sysname[__NEW_UTS_LEN + 1];
+	char nodename[__NEW_UTS_LEN + 1];
+	char release[__NEW_UTS_LEN + 1];
+	char version[__NEW_UTS_LEN + 1];
+	char machine[__NEW_UTS_LEN + 1];
+	char domainname[__NEW_UTS_LEN + 1];
+};
+
 /* Source : v6.14, linux/arch/x86/entry/syscalls/syscall_64.tbl 
 				   /include/linux/syscalls.h
 */
@@ -80,4 +91,7 @@ long sys_chdir(const char *filename);
 long sys_exit(int error_code);
 __attribute__((naked)) void sys_rt_sigreturn(void);
 long sys_rt_sigaction(int signal_number, const struct sigaction *install_new, struct sigaction *old_handler, size_t sigsetsize);
+long sys_getcwd(char *buf, unsigned long size);
+long sys_newuname(struct new_utsname *name);
+long sys_getuid(void);
 #endif
