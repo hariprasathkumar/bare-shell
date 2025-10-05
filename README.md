@@ -4,7 +4,7 @@
 
 🧠 Overview
 
-mysh is a fully functional shell written **from scratch in C**,
+bare-shell is a fully functional shell written **from scratch in C**,
 using only raw Linux syscalls — no libc, no startup files.
 
 It supports:
