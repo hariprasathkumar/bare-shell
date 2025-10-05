@@ -81,6 +81,25 @@ static long load_dir_into_symtab(struct hash **symtab, const char *dir)
     return 0;
 }
 
+long symtab_get_home_directory(char *home, size_t home_len, char **envp)
+{
+    my_memset(home, 0, home_len);
+
+    while (*envp) {
+        if (my_strncmp("HOME", *envp, 4) == 0) {
+            size_t len = my_strlen(*envp+5);
+
+            if (len <= home_len) {
+                (void)my_memcpy(home, *envp+5, len);
+                return 0;
+            }
+            return -1;
+        }
+        envp++;
+    }
+    return -1;
+}
+
 long symtab_build_from_env(struct hash **symtab, char **envp)
 {
     char *path = NULL;

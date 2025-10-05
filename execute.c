@@ -2,7 +2,83 @@
 #include "execute.h"
 #include "parser.h"
 #include "map.h"
+#include "string.h"
+#include "stdlib.h"
+#include "history.h"
+#include "ldisc.h"
 
+extern char home_dir[256];
+extern int builtin_executed;
+
+struct builtin {
+    const char *cmd;
+    int (*f)(int argc, char **argv);
+};
+
+int builtin_cd(int argc, char **argv);
+int builtin_exit(int argc, char **argv);
+int builtin_history(int argc, char **argv);
+
+int builtin_cd(int argc, char **argv)
+{
+    const char *path = (argc > 1) ? argv[1] : home_dir;
+    if (!path) {
+        return -1;
+    }
+
+    long ret = sys_chdir(path);
+    if (ret < 0) return -1;
+
+    builtin_executed = 1;
+
+    return 0;
+}
+
+int builtin_exit(int argc, char **argv)
+{
+    int status = 0;
+
+    if (argc > 1) {
+        status = my_atoi(argv[1]);
+    }
+
+    // heap not freed!
+    ldisc_deinit();
+    lexer_deinit();
+
+    sys_exit(status);
+
+    return 0; // not reachable
+}
+
+int builtin_history(int argc, char **argv)
+{
+    print_history();
+    builtin_executed = 1;
+
+    return 0;
+}
+
+struct builtin builtin_cmds[] = {
+    { "cd", builtin_cd },
+    { "exit", builtin_exit },
+    { "history", builtin_history }
+};
+
+int execute_builtin_cmd(const char *cmd, int argc, char **argv)
+{
+    size_t n = sizeof(builtin_cmds) / sizeof(struct builtin);
+
+    for (size_t i = 0; i < n; i++)
+    {
+        if (my_strncmp(cmd, builtin_cmds[i].cmd, my_strlen(cmd)) == 0)
+        {
+            return builtin_cmds[i].f(argc, argv);
+        }
+    }
+
+    return -1;
+}
 
 static void close_fd_wrapper(int fd)
 {
@@ -244,6 +320,11 @@ pid_t execute_command(const struct ast *t, const char * const *envp, struct hash
     if (!s) {
         //my_printf("execute_command, map_lookup \n");
         return -1;
+    }
+
+    if (s->builtin)
+    {
+        return execute_builtin_cmd(cmd_name, cmd->argc, cmd->argv);
     }
 
     pid = sys_fork();

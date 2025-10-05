@@ -217,8 +217,11 @@ void map_insert(struct hash **hash, const char *cmd, const char *path, int built
         if (!map->hashmap[index] || map->hashmap[index] == TOMBSTONE)
         {
             struct key_value_pair *n = (struct key_value_pair *) my_malloc (sizeof(struct key_value_pair));
-            (void)my_strncpy(n->cmd, cmd, 512);
-            (void)my_strncpy(n->val.path, path, 512);
+            my_memset(n, 0, sizeof(struct key_value_pair));
+            if (cmd)
+                (void)my_strncpy(n->cmd, cmd, 512);
+            if (path)
+                (void)my_strncpy(n->val.path, path, 512);
             n->val.builtin = builtin;
 
             map->hashmap[index] = n;

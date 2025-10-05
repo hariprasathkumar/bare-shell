@@ -11,6 +11,8 @@
 #include "memory.h"
 
 int last_status = 0;
+int builtin_executed = 0;
+char home_dir[256];
 
 // https://gist.github.com/JBlond/2fea43a3049b38287e5e9cefc87b2124
 #define COLOR_RESET   "\033[0m"
@@ -95,12 +97,19 @@ __attribute__((naked)) void _start(void)
 int main(int argc, char *argv[], char *envp[])
 {
     struct hash *symbol_table;
+    const char *cd = "cd";
+    const char *exit = "exit";
+    const char *history = "history";
 
     install_sigchld();
     ldisc_init();
     heap_init();
     map_init(&symbol_table, 10);
     symtab_build_from_env(&symbol_table, envp);
+    symtab_get_home_directory(home_dir, sizeof(home_dir), envp);
+    map_insert(&symbol_table, cd, NULL, 1);
+    map_insert(&symbol_table, exit, NULL, 1);
+    map_insert(&symbol_table, history, NULL, 1);
     lexer_init();
 
     init_history();
@@ -108,7 +117,7 @@ int main(int argc, char *argv[], char *envp[])
     while (1) {
         const char * line;
         line = my_readline(last_status);
-        if (!line) break;
+        if (!line) continue;
         update_history(line);
 
         size_t ntokens = 0;
@@ -133,8 +142,13 @@ int main(int argc, char *argv[], char *envp[])
             sys_wait4(pid, &status, 0, NULL);
         }
 
-        last_status = WIFEXITED(status) ? WEXITSTATUS(status) : 1;
-
+        if (builtin_executed) {
+            builtin_executed = 0;
+            last_status = 0;
+        } else {
+            last_status = WIFEXITED(status) ? WEXITSTATUS(status) : 1;
+        }
+    
         ldisc_init();
         free_ast(tree);
         free_tokens();
