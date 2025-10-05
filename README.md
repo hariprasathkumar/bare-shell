@@ -22,7 +22,7 @@ It supports:
 
 
 🧩 Directory Layout
-
+```
 lexer.c       → Lexical analyzer
 parser.c      → Recursive descent parser for AST
 execute.c     → Executes AST nodes via syscalls
@@ -36,14 +36,14 @@ print.c       → my_printf implementation
 string.c      → Custom string manipulation
 memory.c      → memset, memcpy, etc.
 main.c        → Entry (_start) and main shell loop
-
+```
 
 ⚙️ Build Command
-
+```
 gcc ctype.c execute.c heap.c history.c ldisc.c lexer.c main.c \
 memory.c parser.c print.c stdlib.c string.c symtab.c syscall.c map.c \
 -m64 -nostdlib -fno-pie -no-pie -Wl,-e,_start -static -g -o mysh
-
+```
 Notes:
  - `-nostdlib` removes libc startup code
  - `_start` is the true entry point
@@ -72,9 +72,9 @@ Version
 
 
 🧠 Prompt Design
-
+```
 mysh [<exit_code>] /current/directory $
-
+```
 Colors:
  - [0] → Green for success
  - [nonzero] → Red for failure
