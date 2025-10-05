@@ -256,21 +256,22 @@ struct pipeline {
 };
 */
 //pipeline      = command { "|" command } ;
-pid_t execute_pipeline(const struct pipeline *pipe, const char * const *envp, struct hash **map, int infd, int outfd)
+pid_t execute_pipeline(const struct pipeline *pipe,
+                       const char * const *envp,
+                       struct hash **map,
+                       int infd, int outfd)
 {
-    pid_t pid = 0;
-    long ret = 0;
-    int cur_out, cur_read = infd;
+    pid_t last_pid = -1;
+    int cur_read = infd;
 
-    // chain commands
-    for ( size_t i = 0; i < pipe->count; i++ )
-    {
-        int fd[2] = {-1, -1}; // 0 - read, 1 - write
+    for (size_t i = 0; i < (size_t)pipe->count; i++) {
+        int fd[2] = { -1, -1 };
+        int cur_out;
 
-        if (i != pipe->count - 1) 
-        {
-            if (sys_pipe2(fd, 0) < 0) {
-                //my_printf("execute_pipeline, sys_pipe2 \n");
+        const int is_last = (i == (size_t)pipe->count - 1);
+        if (!is_last) {
+            if (sys_pipe2(fd, O_CLOEXEC) < 0) {
+                if (cur_read != infd) close_fd_wrapper(cur_read);
                 return -1;
             }
             cur_out = fd[1];
@@ -278,28 +279,31 @@ pid_t execute_pipeline(const struct pipeline *pipe, const char * const *envp, st
             cur_out = outfd;
         }
 
-        //my_printf("%d\n", pipe->count);
-        //my_printf("%d\n", pipe->cmds[i]);
-        pid = execute_command(pipe->cmds[i], envp, map, cur_read, cur_out);
+        pid_t pid = execute_command(pipe->cmds[i], envp, map, cur_read, cur_out);
         if (pid < 0) {
-            if (i != pipe->count - 1) {
+            if (!is_last) {
                 close_fd_wrapper(fd[0]);
                 close_fd_wrapper(fd[1]);
             }
+            if (cur_read != infd) close_fd_wrapper(cur_read);
             return -1;
         }
-        
-        if (i != pipe->count - 1)
-        {
+        last_pid = pid;
+
+        if (!is_last) {
             close_fd_wrapper(fd[1]);
-            if (cur_read != infd) close_fd_wrapper(cur_read);
-            cur_read = fd[0]; // copy previous pipe read fd
         }
+
+        if (cur_read != infd) {
+            close_fd_wrapper(cur_read);
+        }
+
+        cur_read = (!is_last) ? fd[0] : cur_read;
     }
 
     if (cur_read != infd) close_fd_wrapper(cur_read);
 
-    return pid;
+    return last_pid;
 }
 
 /*
@@ -310,58 +314,51 @@ struct command {
 };
 */
 //command       = word { word } { redirection } ;
-pid_t execute_command(const struct ast *t, const char * const *envp, struct hash **map, int infd, int outfd)
+pid_t execute_command(const struct ast *t,
+                      const char * const *envp,
+                      struct hash **map,
+                      int infd, int outfd)
 {
     const struct command *cmd = &t->u.cmd;
     const char *cmd_name = cmd->argv[0];
-    long ret, pid;
     struct sym_entry *s = map_lookup(map, cmd_name);
+    if (!s) return -1;
 
-    if (!s) {
-        //my_printf("execute_command, map_lookup \n");
-        return -1;
-    }
+    const int pipeline_context = (infd != STDIN_FD) || (outfd != STDOUT_FD);
 
-    if (s->builtin)
-    {
+    if (s->builtin && !pipeline_context && !cmd->redir) {
         return execute_builtin_cmd(cmd_name, cmd->argc, cmd->argv);
     }
 
-    pid = sys_fork();
-    if (pid < 0) {
-        //my_printf("execute_command, sys_fork \n");
-        return -1;
-    }
+    pid_t pid = sys_fork();
+    if (pid < 0) return -1;
 
-    if (pid == 0)
-    {
-        if (infd != STDIN_FD)
-        {
+    if (pid == 0) {
+        long ret;
+
+        if (infd != STDIN_FD) {
             ret = sys_dup2(infd, STDIN_FD);
-            if (ret < 0) {
-                //my_printf("execute_command, sys_dup2 1 \n");
-                return -1;
-            }
-            close_fd_wrapper(infd);
+            if (ret < 0) sys_exit(127);
         }
-
-        if (outfd != STDOUT_FD)
-        {
+        if (outfd != STDOUT_FD) {
             ret = sys_dup2(outfd, STDOUT_FD);
-            if (ret < 0) {
-                //my_printf("execute_command, sys_dup2 2 \n");
-                return -1;
-            }
-            close_fd_wrapper(outfd);   
+            if (ret < 0) sys_exit(127);
         }
 
-        if (cmd->redir)
-        {
-            if (handle_redirection(cmd->redir) < 0) return -1;
+        if (infd != STDIN_FD) close_fd_wrapper(infd);
+        if (outfd != STDOUT_FD) close_fd_wrapper(outfd);
+
+        if (cmd->redir) {
+            if (handle_redirection(cmd->redir) < 0) sys_exit(127);
         }
 
-        ret = sys_execve(s->path, (const char * const *)cmd->argv, envp);
-        if (ret < 0) sys_exit(127);
+        if (s->builtin) {
+            int rc = execute_builtin_cmd(cmd_name, cmd->argc, cmd->argv);
+            sys_exit(rc & 0xFF);
+        } else {
+            long erc = sys_execve(s->path, (const char * const *)cmd->argv, envp);
+            sys_exit(127);
+        }
     }
 
     return pid;

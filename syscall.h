@@ -37,6 +37,8 @@ typedef int pid_t;
 #define O_APPEND	00002000
 #define O_DIRECTORY	00200000	
 
+#define O_CLOEXEC	02000000	/* set close_on_exec */
+
 #define AT_FDCWD		-100 
 
 #define F_OK 0
