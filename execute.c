@@ -167,7 +167,7 @@ pid_t execute_list(const struct list *list, const char * const *envp, struct has
     if (list->right) {
         pid = execute_ast(list->right, envp, map, infd, outfd);
     }
-    
+
     while (sys_wait4(-1, &status_of_previous_command, WNOHANG, NULL) > 0); // wait for all child to exit
 
     return pid;

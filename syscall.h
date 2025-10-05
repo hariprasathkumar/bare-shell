@@ -44,6 +44,21 @@ typedef int pid_t;
 #define W_OK 2
 #define R_OK 4
 
+// uapi/asm-generic/signal.h
+#define SIGCHLD		17
+// uapi/asm-generic/signal-defs.h
+#define SA_RESTART		0x10000000 // restart syscall if interrupted by signal
+#define SA_NOCLDSTOP	0x00000001 // flag to turn off SIGCHLD when children stop
+#define SA_RESTORER		0x04000000 // Call to trampoline
+
+typedef unsigned long sigset_t[16]; // 128 bytes
+
+struct sigaction {
+    void (*sa_handler)(int);
+    unsigned long sa_flags;
+    void (*sa_restorer)(void);
+    sigset_t sa_mask;
+};
 
 /* Source : v6.14, linux/arch/x86/entry/syscalls/syscall_64.tbl 
 				   /include/linux/syscalls.h
@@ -63,4 +78,6 @@ long sys_wait4(pid_t pid, int *stat_addr, int options, /*struct rusage *ru */ vo
 long sys_pipe2(int *fildes, int flags);
 long sys_chdir(const char *filename);
 long sys_exit(int error_code);
+__attribute__((naked)) void sys_rt_sigreturn(void);
+long sys_rt_sigaction(int signal_number, const struct sigaction *install_new, struct sigaction *old_handler, size_t sigsetsize);
 #endif

@@ -7,11 +7,57 @@
 #include "parser.h"
 #include "execute.h"
 #include "syscall.h"
+#include "print.h"
+#include "memory.h"
+
+void sigchld_handler(int signo)
+{
+    int status;
+    pid_t pid;
+
+    while ((pid = sys_wait4(-1, &status, WNOHANG, 0)) > 0){
+        //my_printf("pid %d exited\n", (long)pid);
+    }
+}
+
+void install_sigchld(void)
+{
+    struct sigaction act;
+    my_memset(&act, 0, sizeof(act));
+
+    act.sa_handler  = sigchld_handler;
+    act.sa_flags    = SA_RESTART | SA_NOCLDSTOP | SA_RESTORER;
+    act.sa_restorer = sys_rt_sigreturn;
+
+    long ret = sys_rt_sigaction(SIGCHLD, &act, NULL, 8);
+
+    //my_printf("sizeof(struct sigaction)=%d sigset_size=128 ret=%d\n",
+    //          (int)sizeof(act), ret);
+}
+
+// int main(int argc, char *argv[], char *envp[]);
+
+// void _start(void)
+// {
+//     size_t *stack = (size_t *)__builtin_frame_address(0);
+//     int argc = *stack;
+//     char **argv = (char **)stack;
+    
+//     while (*stack) stack++;
+//     stack++;
+
+//     char **envp = (char **) stack;
+
+//     int ret = main(argc, argv, envp);
+
+//     sys_exit(ret);
+// }
 
 int main(int argc, char *argv[], char *envp[])
 {
     struct hash *symbol_table;
 
+    install_sigchld();
     ldisc_init();
     heap_init();
     map_init(&symbol_table, 10);

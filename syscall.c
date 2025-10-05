@@ -177,11 +177,12 @@ long sys_dup2(unsigned int oldfd, unsigned int newfd)
 long sys_wait4(pid_t pid, int *stat_addr, int options, void *ru)
 {
     long retVal1;
+    register long r10 asm("r10") = (long)ru;
 
     asm volatile(
         "syscall\n\t"
         : "=a"(retVal1)
-        : "a"(61), "D"((long)pid), "S"((long)stat_addr), "d"((long)options), "r"((long)ru) /* inputs */
+        : "a"(61), "D"((long)pid), "S"((long)stat_addr), "d"((long)options), "r"((long)r10) /* inputs */
         : "rcx", "r11", "memory"
     );
 
@@ -232,4 +233,44 @@ long sys_exit(int error_code)
     );
 
     return retVal1;
+}
+
+// flow:
+// user code runs
+// kernel signals
+// kernel pushes a dummy stack frame of user process
+// set return address in stack to sa_restorer
+// signal runs
+// signal returns
+// execute sa_restorer
+// context restored by kernel and remove the stack frame
+// execution resumes
+__attribute__((naked)) void sys_rt_sigreturn(void)
+{
+    asm volatile (
+        "mov $15, %rax\n\t"
+        "syscall\n\t"
+    );
+}
+
+//13	64	rt_sigaction		sys_rt_sigaction
+long sys_rt_sigaction(int signum,
+                      const struct sigaction *newact,
+                      struct sigaction *oldact,
+                      size_t sigsetsize)
+{
+    long ret;
+    register long r10 asm("r10") = (long)sigsetsize;
+
+    asm volatile(
+        "syscall"
+        : "=a"(ret)
+        : "a"(13),
+          "D"(signum),
+          "S"(newact),
+          "d"(oldact),
+          "r"(r10)
+        : "rcx", "r11", "memory"
+    );
+    return ret;
 }

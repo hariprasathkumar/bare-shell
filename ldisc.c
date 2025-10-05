@@ -150,15 +150,23 @@ const char *my_readline(const char *prompt)
         } else if (ctrlchar == 2 && c == 'A') {
             // up arrow
             ctrlchar = 0;
-            my_strncpy(ldisc_line, get_previous_history(), LDISC_MAX_LINE);
-            cursor_pos = len = my_strlen(ldisc_line);
-            redraw(prompt, &cursor_pos);
+            const char *prev = get_previous_history();
+            if (prev)
+            {
+                my_strncpy(ldisc_line, prev, LDISC_MAX_LINE);
+                cursor_pos = len = my_strlen(ldisc_line);
+                redraw(prompt, &cursor_pos);
+            }
         } else if (ctrlchar == 2 && c == 'B') {
             // down arrow
             ctrlchar = 0;
-            my_strncpy(ldisc_line, get_next_history(), LDISC_MAX_LINE);
-            cursor_pos = len = my_strlen(ldisc_line);
-            redraw(prompt, &cursor_pos);
+            const char *next = get_next_history();
+            if (next)
+            {
+                my_strncpy(ldisc_line, next, LDISC_MAX_LINE);
+                cursor_pos = len = my_strlen(ldisc_line);
+                redraw(prompt, &cursor_pos);
+            }
         } else {
             ctrlchar = 0;
         }

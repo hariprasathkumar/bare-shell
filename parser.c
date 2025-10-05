@@ -164,7 +164,15 @@ struct ast *parse_list(const struct token_stream *ts, size_t *pos)
             new->u.list.op[1] = '|';
         }
 
-        new->u.list.right = parse_pipeline(ts, pos);
+        enum token_type iseol = peek_token(ts, *pos) == TOK_END ? 1 : 0;
+        if (!iseol)
+        {
+            new->u.list.right = parse_pipeline(ts, pos);
+        }
+        else
+        {
+            new->u.list.right = NULL;
+        }
 
         node = new;
 
