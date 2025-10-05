@@ -36,14 +36,13 @@ void smart_prompt(int laststatus)
     sys_newuname(&uts);
 
     int uid = sys_getuid();
-    const char *user = (uid == 0) ? "sudo" : "user";
     const char *color = (last_status == 0) ? COLOR_GREEN : COLOR_RED;
     const char *symbol = (last_status == 0) ? "🟢" : "🔴";
 
-    my_printf("%smysh%s [%d] %s%s@%s%s %s%s%s %s ",
+    my_printf("%smysh%s [%d] %s%s%s %s%s%s %s ",
               COLOR_CYAN, COLOR_RESET,
               last_status,
-              color, user, uts.nodename, COLOR_RESET,
+              color, uts.nodename, COLOR_RESET,
               COLOR_YELLOW, path, COLOR_RESET,
               symbol);
 }
