@@ -35,23 +35,26 @@ void install_sigchld(void)
     //          (int)sizeof(act), ret);
 }
 
-// int main(int argc, char *argv[], char *envp[]);
+int main(int argc, char *argv[], char *envp[]);
 
-// void _start(void)
-// {
-//     size_t *stack = (size_t *)__builtin_frame_address(0);
-//     int argc = *stack;
-//     char **argv = (char **)stack;
+__attribute__((naked)) void _start(void)
+{
+    long *stack;
     
-//     while (*stack) stack++;
-//     stack++;
+    asm ("mov %%rsp, %0" : "=r" (stack));
 
-//     char **envp = (char **) stack;
+    int argc = *stack;
+    char **argv = (char **)stack;
+    
+    while (*stack) stack++;
+    stack++;
 
-//     int ret = main(argc, argv, envp);
+    char **envp = (char **) stack;
 
-//     sys_exit(ret);
-// }
+    int ret = main(argc, argv, envp);
+
+    sys_exit(ret);
+}
 
 int main(int argc, char *argv[], char *envp[])
 {
