@@ -101,7 +101,7 @@ static int handle_redirection(struct redirection *redir)
         {
             case REDIR_OUT:
             {
-                int newfd = sys_openat(AT_FDCWD, redir->filename, O_WRONLY | O_CREAT | O_TRUNC , 0644);
+                int newfd = sys_openat(AT_FDCWD, redir->filename, O_WRONLY | O_CREAT | O_TRUNC , 0666);
                 if (newfd < 0) {
                     //my_printf("handle_redirection, redir_out\n");
                     return -1;
@@ -137,7 +137,7 @@ static int handle_redirection(struct redirection *redir)
 
             case REDIR_APPEND:
             {
-                int newfd = sys_openat(AT_FDCWD, redir->filename, O_WRONLY | O_CREAT | O_APPEND , 0644);
+                int newfd = sys_openat(AT_FDCWD, redir->filename, O_WRONLY | O_CREAT | O_APPEND , 0666);
                 if (newfd < 0)  {
                     //my_printf("handle_redirection, sys_openat REDIR_APPEND\n");
                     return -1;
@@ -349,7 +349,7 @@ pid_t execute_command(const struct ast *t,
         if (outfd != STDOUT_FD) close_fd_wrapper(outfd);
 
         if (cmd->redir) {
-            if (handle_redirection(cmd->redir) < 0) sys_exit(127);
+            if (handle_redirection(cmd->redir) < 0) sys_exit(129);
         }
 
         if (s->builtin) {
