@@ -35,7 +35,6 @@ void smart_prompt(int laststatus)
 
     sys_newuname(&uts);
 
-    int uid = sys_getuid();
     const char *color = (last_status == 0) ? COLOR_GREEN : COLOR_RED;
     const char *symbol = (last_status == 0) ? "🟢" : "🔴";
 
