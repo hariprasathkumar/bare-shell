@@ -1,4 +1,4 @@
-# mysh — A Minimal Standalone Shell (No libc, Syscalls Only)
+# bare-shell — A Minimal Standalone Shell (No libc, Syscalls Only)
 
 
 
