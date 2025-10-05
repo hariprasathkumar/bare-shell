@@ -83,6 +83,7 @@ Colors:
 
 🧾 Architecture Flow
 
+```
 Input Line
    ↓
 Lexer → Token Stream
@@ -92,7 +93,7 @@ Parser → AST (Command / Pipeline / List)
 Executor → Syscalls (fork, dup2, execve, wait4)
    ↓
 Output to terminal / files
-
+```
 
 💡 Internal Components
 
